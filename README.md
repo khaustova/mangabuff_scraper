@@ -33,7 +33,7 @@
     git clone https://github.com/khaustova/mangabuff_scraper.git
     ```
 
-4. Убедитесь, что вы вошли в аккаунт на [mangabuff.ru](https://mangabuff.ru) в браузере **Chrome**. 
+4. Убедитесь, что вы вошли в аккаунт на [mangabuff.ru](https://mangabuff.ru) в браузере **Chrome** и у вас прочитаны все уведомления о новых картах.
 
 5. В файл `user_data.txt` вставьте путь к своему профилю **Chrome**. Если вы используете **Windows**, то он может быть похож на что-то такое:
     ```
