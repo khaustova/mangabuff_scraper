@@ -17,7 +17,6 @@ class MangaBuffScraper:
         notifications_page: Страница уведомлений для отслеживания уведомлений
             о новых карточках.
     """
-
     def __init__(self, browser: Browser):
         self.browser = browser
         self.notifications_page = None
@@ -26,7 +25,6 @@ class MangaBuffScraper:
         """
         Метод для запуска чтения манги из файла manga.txt.
         """
-
         # Открытие страницы уведомлений
         self.notifications_page = await self.browser.get(
             'https://mangabuff.ru/notifications'
@@ -49,7 +47,6 @@ class MangaBuffScraper:
             manga_num: Номер со строкой ссылки на мангу в файле manga.txt
             manga_link: Ссылка на мангу.
         """
-
         manga_page = await self.browser.get(f'{manga_link}', new_tab=True)
         await manga_page.get_content()
         time.sleep(random.randint(3, 5))
@@ -94,6 +91,7 @@ class MangaBuffScraper:
                 logger.debug(
                     'Была получена новая карта! Переходим в режим ожидания...'
                 )
+                new_manga_link = await manga_page.evaluate('window.location.href')
                 await manga_page.close()
                 time.sleep(random.randint(3605, 3615))
 
@@ -101,7 +99,6 @@ class MangaBuffScraper:
                     return None
 
                 current_cards = check_current_cards
-                new_manga_link = await manga_page.evaluate('window.location.href')
                 manga_page = await self.browser.get(new_manga_link, new_tab=True)
 
             time.sleep(random.randint(1, 3))
@@ -113,7 +110,7 @@ class MangaBuffScraper:
         Args:
             manga_page: Отрытая в браузере страница с мангой.
         """
-        # Плавный скроллинг страницы
+        # Плавный скроллинг страницы со случайными паузами
         last_height = await manga_page.evaluate('document.documentElement.scrollHeight')
         start, step = 0, 0
         while True:
@@ -125,20 +122,20 @@ class MangaBuffScraper:
                     for _ in range(random.randint(3, 5)):
                         time.sleep(random.uniform(1, 2.5))
                         await manga_page.evaluate('window.scrollBy(0, -100)')
-                        
+
                     for _ in range(random.randint(3, 5)):
                         await manga_page.evaluate('window.scrollBy(0, 100)')
                         time.sleep(random.uniform(0.01, 0.05))
                     step = 0
-                
+
             for _ in range(random.randint(8, 10)):
                 await manga_page.evaluate('window.scrollBy(0, -500)')
                 time.sleep(random.uniform(0.01, 0.5))
-                
+
             for _ in range(random.randint(8, 10)):
                 await manga_page.evaluate('window.scrollBy(0, 500)')
                 time.sleep(random.uniform(0.01, 0.5))
-                
+
             new_height = await manga_page.evaluate(
                 'document.documentElement.scrollHeight'
             )
@@ -161,7 +158,6 @@ class MangaBuffScraper:
             new_manga_link: Новая ссылка на читаемую мангу.
         
         """
-
         new_manga_link = new_manga_link[:-1] + str(int(new_manga_link[-1]) + 1)
 
         with open('manga.txt', 'r', encoding='utf-8') as file_with_manga:
@@ -183,7 +179,6 @@ class MangaBuffScraper:
             manga_num: Индекс строки с читаемой мангой в файле.
         
         """
-
         with open('manga.txt', 'r', encoding='utf-8') as file_with_manga:
             lines = file_with_manga.readlines()
 
@@ -209,7 +204,6 @@ class MangaBuffScraper:
         Returns:
             list: Список ссылок на мангу.
         """
-
         manga_links = []
 
         # Проход по страницам сайта

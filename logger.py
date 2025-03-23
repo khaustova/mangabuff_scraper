@@ -13,10 +13,9 @@ def setup_logger(name: str, log_file: str='app.log'):
     Returns:
         logging.Logger: Настроенный логгер.
     """
-
     # Создание логгера
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG) # Установка уровня логирования  
+    logger.setLevel(logging.DEBUG) # Установка уровня логирования
 
     # Создание форматтер
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

@@ -9,7 +9,6 @@ async def main():
     """
     Основная асинхронная функция для запуска скрипта фарма карточек.
     """
-
     # Получение пути к папке с профилем Chrome
     with open('user_data.txt', 'r', encoding='utf-8') as file:
         user_data_dir = file.read()
