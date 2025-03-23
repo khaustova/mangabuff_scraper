@@ -65,24 +65,16 @@ class MangaBuffScraper:
         while True:
             await self._read_chapter(manga_page)
 
+            # Обновление ссылки на главу в файле manga.txt
+            new_manga_link = await manga_page.evaluate('window.location.href')
+            await self._update_manga_link_in_file(manga_num, new_manga_link)
+
             # Проверка новых уведомлений
             await self.notifications_page.reload()
             await self.notifications_page.get_content()
             check_current_cards = await self.notifications_page.find_all(
                 'Вы получили новую карту'
             )
-
-            # Если получена новая карта, ждем около часа
-            if len(current_cards) < len(check_current_cards):
-                logger.debug(
-                    'Была получена новая карта! Переходим в режим ожидания...'
-                )
-                current_cards = check_current_cards
-                time.sleep(random.randint(3605, 3615))
-
-            # Обновление ссылки на главу в файле manga.txt
-            new_manga_link = await manga_page.evaluate('window.location.href')
-            await self._update_manga_link_in_file(manga_num, new_manga_link)
 
             # Переход к следующей главе
             try:
@@ -91,12 +83,26 @@ class MangaBuffScraper:
                 logger.debug('Переходим к главе %s манги %s', chapter, manga_name)
                 await next_button.click()
                 time.sleep(random.randint(3, 5))
+                is_more_chapters = True
             except Exception:
                 logger.exception('Главы закончились')
                 await manga_page.close()
                 await self._delete_read_manga_link_in_file(manga_num)
+                is_more_chapters = False
 
-                return
+            # Если получена новая карта, ждем около часа
+            if len(current_cards) < len(check_current_cards):
+                logger.debug(
+                    'Была получена новая карта! Переходим в режим ожидания...'
+                )
+                time.sleep(random.randint(3605, 3615))
+
+                if not is_more_chapters:
+                    return None
+
+                current_cards = check_current_cards
+                new_manga_link = await manga_page.evaluate('window.location.href')
+                manga_page = await self.browser.get(new_manga_link, new_tab=True)
 
             time.sleep(random.randint(1, 3))
 
@@ -107,26 +113,37 @@ class MangaBuffScraper:
         Args:
             manga_page: Отрытая в браузере страница с мангой.
         """
-
-        last_height = await manga_page.evaluate('document.body.scrollHeight')
-        step = int(last_height // (last_height * 0.002)) # Шаг прокрутки
-
         # Плавный скроллинг страницы
-        for _ in range(0, last_height, step):
-            await manga_page.scroll_down(50)
-            time.sleep(random.uniform(0.01, 0.5))
-
-        # Если страница не была проскроллена до конца, то скроллим её
+        last_height = await manga_page.evaluate('document.documentElement.scrollHeight')
+        start, step = 0, 0
         while True:
-            await manga_page.evaluate(
-                'window.scrollTo(0, document.body.scrollHeight)'
-            )
-            await asyncio.sleep(2)
-
+            for i in range(start, last_height, 500):
+                step += 1
+                await manga_page.evaluate('window.scrollBy(0, 500)')
+                print(i, last_height)
+                time.sleep(random.uniform(0.01, 0.5))
+                if step == random.randint(15, 17):
+                    time.sleep(random.uniform(1, 2.5))
+                    await manga_page.evaluate('window.scrollBy(0, -100)')
+                    time.sleep(random.uniform(0.01, 0.05))
+                    await manga_page.evaluate('window.scrollBy(0, -100)')
+                    time.sleep(random.uniform(0.01, 0.05))
+                    await manga_page.evaluate('window.scrollBy(0, 200)')
+                    time.sleep(random.uniform(0.01, 0.05))
+                    step = 0
+                
+            for _ in range(random.randint(8, 10)):
+                await manga_page.evaluate('window.scrollBy(0, -500)')
+                time.sleep(random.uniform(0.01, 0.5))
+                
+            for _ in range(random.randint(8, 10)):
+                await manga_page.evaluate('window.scrollBy(0, 500)')
+                time.sleep(random.uniform(0.01, 0.5))
+                
             new_height = await manga_page.evaluate(
-                'document.body.scrollHeight'
+                'document.documentElement.scrollHeight'
             )
-
+            start = last_height
             if new_height == last_height:
                 break
             last_height = new_height
