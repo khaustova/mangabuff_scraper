@@ -86,7 +86,6 @@ class MangaBuffScraper:
                 is_more_chapters = True
             except Exception:
                 logger.exception('Главы закончились')
-                await manga_page.close()
                 await self._delete_read_manga_link_in_file(manga_num)
                 is_more_chapters = False
 
@@ -95,6 +94,7 @@ class MangaBuffScraper:
                 logger.debug(
                     'Была получена новая карта! Переходим в режим ожидания...'
                 )
+                await manga_page.close()
                 time.sleep(random.randint(3605, 3615))
 
                 if not is_more_chapters:
@@ -117,19 +117,18 @@ class MangaBuffScraper:
         last_height = await manga_page.evaluate('document.documentElement.scrollHeight')
         start, step = 0, 0
         while True:
-            for i in range(start, last_height, 500):
+            for _ in range(start, last_height, 500):
                 step += 1
                 await manga_page.evaluate('window.scrollBy(0, 500)')
-                print(i, last_height)
                 time.sleep(random.uniform(0.01, 0.5))
                 if step == random.randint(15, 17):
-                    time.sleep(random.uniform(1, 2.5))
-                    await manga_page.evaluate('window.scrollBy(0, -100)')
-                    time.sleep(random.uniform(0.01, 0.05))
-                    await manga_page.evaluate('window.scrollBy(0, -100)')
-                    time.sleep(random.uniform(0.01, 0.05))
-                    await manga_page.evaluate('window.scrollBy(0, 200)')
-                    time.sleep(random.uniform(0.01, 0.05))
+                    for _ in range(random.randint(3, 5)):
+                        time.sleep(random.uniform(1, 2.5))
+                        await manga_page.evaluate('window.scrollBy(0, -100)')
+                        
+                    for _ in range(random.randint(3, 5)):
+                        await manga_page.evaluate('window.scrollBy(0, 100)')
+                        time.sleep(random.uniform(0.01, 0.05))
                     step = 0
                 
             for _ in range(random.randint(8, 10)):
