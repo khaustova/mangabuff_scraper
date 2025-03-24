@@ -60,7 +60,8 @@ class MangaBuffScraper:
             'Вы получили новую карту'
         )
         while True:
-            await self._read_chapter(manga_page)
+            #await self._read_chapter(manga_page)
+            await self._scroll_chapter(manga_page)
 
             # Обновление ссылки на главу в файле manga.txt
             new_manga_link = await manga_page.evaluate('window.location.href')
@@ -77,14 +78,20 @@ class MangaBuffScraper:
             try:
                 next_button = await manga_page.find('След. глава')
                 chapter += 1
-                logger.debug('Переходим к главе %s манги %s', chapter, manga_name)
+                is_more_chapters = True
+
                 await next_button.click()
                 time.sleep(random.randint(3, 5))
-                is_more_chapters = True
+                
+                await manga_page.reload()
+                time.sleep(random.randint(3, 5))
+                
+                logger.debug('Переходим к главе %s манги %s', chapter, manga_name)
             except Exception:
-                logger.exception('Главы закончились')
                 await self._delete_read_manga_link_in_file(manga_num)
                 is_more_chapters = False
+                
+                logger.exception('Главы закончились')
 
             # Если получена новая карта, ждем около часа
             if len(current_cards) < len(check_current_cards):
@@ -103,50 +110,37 @@ class MangaBuffScraper:
 
             time.sleep(random.randint(1, 3))
 
-    async def _read_chapter(self, manga_page: Tab) -> None:
+    async def _scroll_chapter(self, manga_page: Tab) -> None:
         """
-        Метод для чтения главы манги.
+        Метод для прокрутки страницы с главой манги.
 
         Args:
             manga_page: Отрытая в браузере страница с мангой.
         """
-        # Плавный скроллинг страницы со случайными паузами
         last_height = await manga_page.evaluate('document.documentElement.scrollHeight')
-        start, step = 0, 0
+        step = 1
         while True:
-            for _ in range(start, last_height, 500):
-                step += 1
-                await manga_page.evaluate('window.scrollBy(0, 500)')
-                time.sleep(random.uniform(0.01, 0.3))
-                
-                if step % 5 == 0:
-                    time.sleep(random.uniform(1, 2))
-                
-                if step == random.randint(15, 17):
-                    for _ in range(random.randint(3, 5)):
-                        time.sleep(random.uniform(0.01, 0.3))
-                        await manga_page.evaluate('window.scrollBy(0, -100)')
+            # Плавная прокрутка вниз
+            await manga_page.evaluate('window.scrollBy(0, 300)')
+            await asyncio.sleep(0.2)
 
-                    for _ in range(random.randint(3, 5)):
-                        await manga_page.evaluate('window.scrollBy(0, 100)')
-                        time.sleep(random.uniform(0.01, 0.3))
-                    step = 0
+            # Плавная прокрутка вверх
+            if step % 50 == 0:
+                for _ in range(5):
+                    await manga_page.evaluate('window.scrollBy(0, -300)')
+                    await asyncio.sleep(0.2)
+                await asyncio.sleep(0.8)
 
-            for _ in range(random.randint(8, 10)):
-                await manga_page.evaluate('window.scrollBy(0, -500)')
-                time.sleep(random.uniform(0.01, 0.5))
+            # Получаение новых данных о высоте страницы
+            new_height = await manga_page.evaluate('document.documentElement.scrollHeight')
+            current_position = await manga_page.evaluate('window.pageYOffset + window.innerHeight')
 
-            for _ in range(random.randint(8, 10)):
-                await manga_page.evaluate('window.scrollBy(0, 500)')
-                time.sleep(random.uniform(0.01, 0.5))
-
-            new_height = await manga_page.evaluate(
-                'document.documentElement.scrollHeight'
-            )
-            start = last_height
-            if new_height == last_height:
+            # Проверка достижение конца страницы
+            if abs(new_height - current_position) < 100:
                 break
-            last_height = new_height
+
+            last_height = max(last_height, new_height)
+            step += 1
 
     async def _update_manga_link_in_file(
         self,
