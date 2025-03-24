@@ -117,15 +117,19 @@ class MangaBuffScraper:
             for _ in range(start, last_height, 500):
                 step += 1
                 await manga_page.evaluate('window.scrollBy(0, 500)')
-                time.sleep(random.uniform(0.01, 0.5))
+                time.sleep(random.uniform(0.01, 0.3))
+                
+                if step % 5 == 0:
+                    time.sleep(random.uniform(1, 2))
+                
                 if step == random.randint(15, 17):
                     for _ in range(random.randint(3, 5)):
-                        time.sleep(random.uniform(1, 2.5))
+                        time.sleep(random.uniform(0.01, 0.3))
                         await manga_page.evaluate('window.scrollBy(0, -100)')
 
                     for _ in range(random.randint(3, 5)):
                         await manga_page.evaluate('window.scrollBy(0, 100)')
-                        time.sleep(random.uniform(0.01, 0.05))
+                        time.sleep(random.uniform(0.01, 0.3))
                     step = 0
 
             for _ in range(random.randint(8, 10)):
