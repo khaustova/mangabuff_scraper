@@ -15,7 +15,7 @@ async def main():
 
     # Инициализация браузера
     browser = await uc.start(
-        browser_args=['--disable-web-security'],
+        # browser_args=['--headless=new'], раскомментировать для запуска в headless
         user_data_dir=user_data_dir,
     )
 
