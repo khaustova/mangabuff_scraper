@@ -91,7 +91,7 @@ class MangaBuffScraper:
                 await self._delete_read_manga_link_in_file(manga_num)
                 is_more_chapters = False
                 
-                logger.exception('Главы закончились')
+                logger.info('Главы закончились')
 
             # Если получена новая карта, ждем около часа
             if len(current_cards) < len(check_current_cards):
